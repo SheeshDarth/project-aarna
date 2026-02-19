@@ -8,6 +8,7 @@ import {
     getIndexerConfigFromViteEnvironment,
 } from '../utils/network/getAlgoClientConfigs'
 import { AarnaRegistryFactory } from '../contracts/AarnaRegistry'
+import { VALIDATOR_ADDRESS } from '../constants/roles'
 
 /* ───────────────── Types ───────────────── */
 export interface AarnaProject {
@@ -220,10 +221,12 @@ export function useAarna() {
                 defaultSender: activeAddress!,
                 defaultSigner: transactionSigner,
             })
-            const { appClient: client } = await factory.send.create.init({ args: [], populateAppCallResources: false })
+            const { appClient: client } = await factory.send.create.init({ args: [], populateAppCallResources: true })
             setAppClient(client)
             setAppId(client.appId)
             localStorage.setItem(LS_APP_ID, client.appId.toString())
+            // Auto-set the validator so the Validator page works immediately
+            await client.send.setValidator({ args: { addr: VALIDATOR_ADDRESS }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
             await fetchOnChainProjects(client)
             enqueueSnackbar(`App deployed! ID: ${client.appId}`, { variant: 'success' })
         } catch (e: any) {
@@ -238,7 +241,7 @@ export function useAarna() {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
-            await appClient.send.setValidator({ args: { addr }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
+            await appClient.send.setValidator({ args: { addr }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
             enqueueSnackbar('Validator set', { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
@@ -277,7 +280,7 @@ export function useAarna() {
         if (!ensureWallet() || !needClient()) return undefined
         setBusy(true)
         try {
-            const r = await appClient.send.submitProject({ args: { name, location, ecosystem, cid }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
+            const r = await appClient.send.submitProject({ args: { name, location, ecosystem, cid }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
             const idx = Number(r?.return ?? 0)
             setProjects(prev => [...prev, { id: idx, name, location, ecosystem, cid, status: 'pending', credits: 0, submitter: activeAddress || '' }])
             setProjectCount(idx + 1)
@@ -292,7 +295,7 @@ export function useAarna() {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
-            await appClient.send.approveProject({ args: { projectId: BigInt(projectId), credits: BigInt(credits) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
+            await appClient.send.approveProject({ args: { projectId: BigInt(projectId), credits: BigInt(credits) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
             updateProjectStatus(projectId, 'verified', credits)
             enqueueSnackbar(`Project #${projectId} approved!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
@@ -304,7 +307,7 @@ export function useAarna() {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
-            await appClient.send.rejectProject({ args: { projectId: BigInt(projectId) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
+            await appClient.send.rejectProject({ args: { projectId: BigInt(projectId) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
             updateProjectStatus(projectId, 'rejected')
             enqueueSnackbar(`Project #${projectId} rejected`, { variant: 'info' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
@@ -329,7 +332,7 @@ export function useAarna() {
 
             const r = await appClient.send.issueCredits({
                 args: { projectId: BigInt(projectId) }, sender: activeAddress!, signer: transactionSigner,
-                populateAppCallResources: false,
+                populateAppCallResources: true,
                 extraFee: AlgoAmount.MicroAlgo(2_000),
                 // Manually pass foreign references the contract needs
                 accountReferences: submitter ? [submitter] : [],
