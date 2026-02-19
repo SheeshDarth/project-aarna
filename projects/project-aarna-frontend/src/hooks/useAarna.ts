@@ -97,6 +97,12 @@ export function useAarna() {
         if (msg.includes('insufficient payment')) return 'Not enough ALGO sent for this purchase'
         if (msg.includes('only seller can cancel')) return 'Only the seller can cancel this listing'
         if (msg.includes('no AARNA token')) return 'Create the AARNA token first'
+        // Catch raw AVM assert failures from simulate
+        if (msg.includes('assert failed') || msg.includes('Error resolving execution info via simulate')) {
+            if (msg.includes('pc=4245') || msg.includes('pc=3507')) return 'Unauthorized: only the validator wallet can approve/reject projects'
+            if (msg.includes('pc=3497') || msg.includes('pc=2757')) return 'Unauthorized: only the admin wallet can perform this action'
+            return 'Transaction failed — the project may already be processed, or your wallet is not authorized'
+        }
         return msg.length > 120 ? msg.slice(0, 120) + '…' : msg
     }, [])
 
@@ -295,24 +301,36 @@ export function useAarna() {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
-            await appClient.send.approveProject({ args: { projectId: BigInt(projectId), credits: BigInt(credits) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
+            await appClient.send.approveProject({
+                args: { projectId: BigInt(projectId), credits: BigInt(credits) },
+                sender: activeAddress!,
+                signer: transactionSigner,
+                populateAppCallResources: false,
+            })
             updateProjectStatus(projectId, 'verified', credits)
+            await refreshProjects()
             enqueueSnackbar(`Project #${projectId} approved!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, needClient, appClient, updateProjectStatus, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, updateProjectStatus, refreshProjects, enqueueSnackbar, parseError])
 
     // ─── Reject Project ───
     const rejectProject = useCallback(async (projectId: number) => {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
-            await appClient.send.rejectProject({ args: { projectId: BigInt(projectId) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
+            await appClient.send.rejectProject({
+                args: { projectId: BigInt(projectId) },
+                sender: activeAddress!,
+                signer: transactionSigner,
+                populateAppCallResources: false,
+            })
             updateProjectStatus(projectId, 'rejected')
+            await refreshProjects()
             enqueueSnackbar(`Project #${projectId} rejected`, { variant: 'info' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, needClient, appClient, updateProjectStatus, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, updateProjectStatus, refreshProjects, enqueueSnackbar, parseError])
 
     // ─── Issue Credits ───
     const issueCredits = useCallback(async (projectId: number) => {
