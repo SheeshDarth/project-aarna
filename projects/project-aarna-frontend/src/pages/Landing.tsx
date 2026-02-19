@@ -1,57 +1,92 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import { useMotionValue, useMotionTemplate, motion } from 'framer-motion'
+import { generateRandomString } from '@/components/ui/evervault-card'
+
+/* ─── D-MRV Step Card with EvervaultCard hover effect ─── */
+function DmrvStepCard({ step, title, desc, color }: { step: string; title: string; desc: string; color: string }) {
+    const mouseX = useMotionValue(0)
+    const mouseY = useMotionValue(0)
+    const [randomString, setRandomString] = useState('')
+    const [hovered, setHovered] = useState(false)
+
+    useEffect(() => {
+        setRandomString(generateRandomString(800))
+    }, [])
+
+    const onMouseMove = useCallback(({ currentTarget, clientX, clientY }: React.MouseEvent) => {
+        const { left, top } = currentTarget.getBoundingClientRect()
+        mouseX.set(clientX - left)
+        mouseY.set(clientY - top)
+        setRandomString(generateRandomString(800))
+    }, [mouseX, mouseY])
+
+    const maskImage = useMotionTemplate`radial-gradient(200px at ${mouseX}px ${mouseY}px, white, transparent)`
+    const maskStyle = { maskImage, WebkitMaskImage: maskImage }
+
+    return (
+        <div
+            className="g-card p-5 text-center flex-1 relative overflow-hidden cursor-default group/step"
+            onMouseMove={onMouseMove}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
+            {/* EvervaultCard-style hover pattern layer */}
+            <div className="pointer-events-none absolute inset-0 rounded-2xl">
+                <motion.div
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover/step:opacity-100 backdrop-blur-xl transition duration-500"
+                    style={{
+                        ...maskStyle,
+                        background: `linear-gradient(135deg, ${color}40, ${color}15)`,
+                    }}
+                />
+                <motion.div
+                    className="absolute inset-0 rounded-2xl opacity-0 mix-blend-overlay group-hover/step:opacity-100"
+                    style={maskStyle}
+                >
+                    <p className="absolute inset-x-0 text-[10px] h-full break-words whitespace-pre-wrap font-mono font-bold transition duration-500"
+                        style={{ color: `${color}60` }}>
+                        {randomString}
+                    </p>
+                </motion.div>
+            </div>
+
+            {/* Card content — always on top */}
+            <div className="relative z-10">
+                <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center text-sm font-bold mb-3"
+                    style={{ background: `${color}15`, border: `1.5px solid ${color}40`, color }}>
+                    {step}
+                </div>
+                <h3 className="text-base font-bold text-white mb-2">{title}</h3>
+                <p className="text-muted text-xs leading-relaxed">{desc}</p>
+            </div>
+        </div>
+    )
+}
 
 /* ─── Inline SVG components for marine life ─── */
 
-/** Hokusai-inspired wave art — asymmetric, organic strokes */
+/** Hokusai wave art — uses the actual Great Wave illustration */
 function WaveArt() {
     return (
         <div className="wave-art" style={{ top: 0 }}>
-            {/* Layer 1 — large background wave */}
-            <svg viewBox="0 0 1440 320" className="wl-1" style={{ opacity: 0.15 }}>
-                <path
-                    fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"
-                    d="M0,200 C80,170 160,260 280,220 C400,180 440,260 560,230 C680,200 720,160 840,190 C960,220 1040,150 1160,180 C1280,210 1360,170 1440,200"
+            <div className="wl-1" style={{ position: 'relative' }}>
+                <img
+                    src="/hokusai-wave.jpg"
+                    alt=""
+                    aria-hidden="true"
+                    style={{
+                        width: '100%',
+                        height: 'auto',
+                        display: 'block',
+                        opacity: 0.75,
+                        mixBlendMode: 'multiply',
+                        filter: 'contrast(1.2) saturate(1.3) brightness(0.9)',
+                        maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                        WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                    }}
                 />
-                <path
-                    fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1"
-                    d="M280,215 C300,200 310,205 320,218 C325,224 320,230 312,228 C305,226 300,218 310,212 C315,208 322,210 325,216"
-                />
-                {/* wave crest curl */}
-                <path
-                    fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2"
-                    d="M240,225 C270,190 310,195 330,220 C315,205 290,200 270,210 Z"
-                />
-            </svg>
-
-            {/* Layer 2 — mid wave with curling crests */}
-            <svg viewBox="0 0 1440 300" className="wl-2" style={{ opacity: 0.2, marginTop: '-140px' }}>
-                <path
-                    fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="1.3"
-                    d="M0,180 C120,220 200,150 360,190 C520,230 600,160 760,200 C920,240 1000,170 1160,200 C1320,230 1380,190 1440,180"
-                />
-                <path
-                    fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.25)" strokeWidth="1"
-                    d="M700,195 C730,165 770,170 790,195 C775,178 750,175 730,185 Z"
-                />
-                <path
-                    fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.25)" strokeWidth="1"
-                    d="M1100,195 C1130,168 1170,172 1185,195 C1172,180 1150,176 1135,185 Z"
-                />
-            </svg>
-
-            {/* Layer 3 — fine detail wave */}
-            <svg viewBox="0 0 1440 280" className="wl-3" style={{ opacity: 0.12, marginTop: '-120px' }}>
-                <path
-                    fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1"
-                    d="M0,160 C180,200 280,140 440,170 C600,200 700,150 860,180 C1020,210 1120,160 1280,185 C1380,200 1420,175 1440,165"
-                />
-                {/* foam dots */}
-                <circle cx="310" cy="205" r="2" fill="rgba(255,255,255,0.12)" />
-                <circle cx="325" cy="210" r="1.5" fill="rgba(255,255,255,0.08)" />
-                <circle cx="740" cy="188" r="1.8" fill="rgba(255,255,255,0.1)" />
-                <circle cx="1145" cy="190" r="2" fill="rgba(255,255,255,0.1)" />
-            </svg>
+            </div>
         </div>
     )
 }
@@ -169,10 +204,10 @@ export default function Landing() {
         <div style={{ overflowX: 'hidden' }}>
             {/* ═══ Fixed bubbles ═══ */}
             <div className="bubbles-bg">
-                {[8, 14, 5, 10, 16, 6, 12, 4].map((s, i) => (
+                {[12, 20, 8, 16, 24, 10, 18, 6, 14, 22].map((s, i) => (
                     <div key={i} className="bub" style={{
-                        left: `${8 + i * 12}%`, width: s, height: s,
-                        animationDuration: `${10 + i * 2}s`, animationDelay: `${i * 1.5}s`
+                        left: `${5 + i * 9.5}%`, width: s, height: s,
+                        animationDuration: `${8 + i * 1.8}s`, animationDelay: `${i * 1.2}s`
                     }} />
                 ))}
             </div>
@@ -185,11 +220,13 @@ export default function Landing() {
                 {/* Japanese wave art */}
                 <WaveArt />
 
-                {/* Sun glow */}
+                {/* Marine creatures appear BELOW the wave art */}
+
+                {/* Sun glow — larger and warmer */}
                 <div className="absolute" style={{
-                    top: '-8%', left: '50%', transform: 'translateX(-50%)',
-                    width: 700, height: 700, borderRadius: '50%',
-                    background: 'radial-gradient(circle, rgba(255,233,170,0.12) 0%, transparent 65%)',
+                    top: '-12%', left: '50%', transform: 'translateX(-50%)',
+                    width: 900, height: 900, borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(255,233,170,0.18) 0%, rgba(255,220,130,0.06) 40%, transparent 70%)',
                     pointerEvents: 'none', zIndex: 0
                 }} />
 
@@ -203,13 +240,13 @@ export default function Landing() {
                     </div>
 
                     <h1 className="reveal-up font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mt-8 leading-tight" style={{ letterSpacing: '-0.03em' }}>
-                        Transparent Verification
+                        Blue Carbon,
                         <br />
-                        <span className="text-accent">for India's Blue Carbon</span>
+                        <span className="text-accent">Verified On-Chain</span>
                     </h1>
 
-                    <p className="reveal-up mt-6 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: '#B0C8D8' }}>
-                        Monitoring, reporting, and verifying coastal ecosystem restoration — immutably recorded on-chain.
+                    <p className="reveal-up mt-6 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: '#d0e6f0' }}>
+                        India's first decentralized MRV platform — monitoring, reporting, and verifying coastal ecosystem restoration on Algorand.
                     </p>
 
                     <div className="reveal-up flex flex-wrap gap-4 mt-10 justify-center">
@@ -231,13 +268,18 @@ export default function Landing() {
                     </div>
                 </div>
 
-                {/* Transition wave at bottom */}
+                {/* Underwater transition — wave meets ocean */}
                 <div className="absolute bottom-0 left-0 w-full" style={{ zIndex: 5 }}>
-                    <svg viewBox="0 0 1440 100" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 80 }}>
-                        <path fill="#005A7E" fillOpacity="0.3" d="M0,60 C240,90 480,40 720,65 C960,90 1200,40 1440,60 L1440,100 L0,100 Z" />
-                        <path fill="#005A7E" fillOpacity="0.6" d="M0,70 C360,95 720,50 1080,75 C1260,85 1380,65 1440,72 L1440,100 L0,100 Z" />
-                        <path fill="#005A7E" d="M0,82 C360,95 720,78 1080,90 C1320,96 1400,85 1440,88 L1440,100 L0,100 Z" />
+                    <svg viewBox="0 0 1440 120" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 100 }}>
+                        <path fill="#005A7E" fillOpacity="0.2" d="M0,40 C240,80 480,20 720,55 C960,85 1200,30 1440,50 L1440,120 L0,120 Z" />
+                        <path fill="#005A7E" fillOpacity="0.5" d="M0,60 C360,90 720,40 1080,65 C1260,80 1380,55 1440,62 L1440,120 L0,120 Z" />
+                        <path fill="#005A7E" d="M0,80 C360,95 720,72 1080,88 C1320,96 1400,82 1440,86 L1440,120 L0,120 Z" />
                     </svg>
+                    {/* Fish swimming at the waterline */}
+                    <div className="marine-layer" style={{ top: '-60px', height: '80px' }}>
+                        <FishSvg size={55} className="svg-fish fish-a" />
+                        <FishSvg size={40} className="svg-fish fish-d" />
+                    </div>
                 </div>
             </section>
 
@@ -253,10 +295,10 @@ export default function Landing() {
                     ))}
                 </div>
 
-                {/* ── Fish BEHIND cards (z-index: auto / below content z-index) ── */}
+                {/* ── Fish BEHIND cards ── */}
                 <div className="marine-layer" style={{ zIndex: 1 }}>
-                    <FishSvg size={50} className="svg-fish fish-a" />
-                    <FishSvg size={38} className="svg-fish fish-c" />
+                    <FishSvg size={70} className="svg-fish fish-a" />
+                    <FishSvg size={55} className="svg-fish fish-c" />
                 </div>
 
                 {/* Content (z-index: 10) */}
@@ -314,8 +356,8 @@ export default function Landing() {
 
                 {/* ── Fish IN FRONT of cards (overlapping, 3D effect) ── */}
                 <div className="marine-layer fish-front">
-                    <FishSvg size={44} className="svg-fish fish-b" />
-                    <FishSvg size={32} className="svg-fish fish-d" />
+                    <FishSvg size={60} className="svg-fish fish-b" />
+                    <FishSvg size={45} className="svg-fish fish-d" />
                 </div>
             </section>
 
@@ -420,8 +462,9 @@ export default function Landing() {
 
                 {/* ── Turtle + jellyfish IN FRONT (overlapping cards → 3D) ── */}
                 <div className="marine-layer turtle-front">
-                    <JellySvg size={40} className="svg-jelly" style={{ top: '55%', left: '6%', animationDelay: '2s', opacity: 0.08 }} />
-                    <JellySvg size={35} className="svg-jelly" style={{ top: '72%', right: '20%', animationDelay: '3s', opacity: 0.06 }} />
+                    <JellySvg size={55} className="svg-jelly" style={{ top: '40%', left: '5%', animationDelay: '2s' }} />
+                    <JellySvg size={45} className="svg-jelly" style={{ top: '65%', right: '8%', animationDelay: '3s' }} />
+                    <TurtleSvg size={120} className="svg-turtle" />
                 </div>
             </section>
 
@@ -454,25 +497,92 @@ export default function Landing() {
                         </p>
                     </div>
 
-                    <div className="stagger-kids flex flex-col md:flex-row items-stretch gap-0">
+                    {/* Zigzag timeline layout */}
+                    <div className="relative stagger-kids">
+                        {/* Central timeline line — desktop only */}
+                        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px" style={{
+                            background: 'linear-gradient(to bottom, transparent, rgba(0,229,204,0.25) 10%, rgba(0,229,204,0.25) 90%, transparent)',
+                        }} />
+
                         {[
-                            { step: '01', title: 'Submit Data', desc: 'Developers upload project evidence (satellite data, field reports) to IPFS and register the CID on-chain.', color: '#006994' },
-                            { step: '02', title: 'Validator Review', desc: 'Authorized validators cross-reference evidence with satellite imagery and verify carbon sequestration claims.', color: '#9F7AEA' },
-                            { step: '03', title: 'Smart Contract', desc: 'Approval is recorded immutably on Algorand. Project status transitions from pending to verified on-chain.', color: '#10B981' },
-                            { step: '04', title: 'Issue Credits', desc: 'AARNA tokens (ASA) are minted and transferred to the project developer as verified blue carbon credits.', color: '#00E5CC' },
-                        ].map((s, i) => (
-                            <div key={i} className="flex items-stretch flex-1">
-                                <div className="g-card p-5 text-center flex-1">
-                                    <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center text-sm font-bold mb-3"
-                                        style={{ background: `${s.color}15`, border: `1.5px solid ${s.color}40`, color: s.color }}>
-                                        {s.step}
+                            {
+                                step: '01', title: 'Submit Data', color: '#006994',
+                                desc: 'Project developers upload evidence — satellite imagery, field reports, ecological surveys — to IPFS. The content hash (CID) is registered on-chain as a tamper-proof reference.',
+                                icon: (
+                                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#006994" strokeWidth="1.5" strokeLinecap="round">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                                    </svg>
+                                ),
+                            },
+                            {
+                                step: '02', title: 'Validator Review', color: '#9F7AEA',
+                                desc: 'Authorized validators independently cross-reference the submitted evidence with satellite imagery. They verify carbon sequestration claims before casting their on-chain vote.',
+                                icon: (
+                                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9F7AEA" strokeWidth="1.5" strokeLinecap="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                ),
+                            },
+                            {
+                                step: '03', title: 'On-Chain Verification', color: '#10B981',
+                                desc: 'The smart contract records approval immutably on Algorand. Project status transitions from "pending" to "verified" — publicly auditable by anyone, forever.',
+                                icon: (
+                                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
+                                    </svg>
+                                ),
+                            },
+                            {
+                                step: '04', title: 'Issue Credits', color: '#00E5CC',
+                                desc: 'AARNA tokens (ASA) are minted and transferred to the project developer — each token representing a verified, traceable blue carbon credit backed by real ecosystem data.',
+                                icon: (
+                                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" strokeWidth="1.5" strokeLinecap="round">
+                                        <circle cx="12" cy="12" r="8" /><path d="M12 6v12M9 9h6M9 15h6" />
+                                    </svg>
+                                ),
+                            },
+                        ].map((s, i) => {
+                            const isLeft = i % 2 === 0
+                            return (
+                                <div key={i} className={`flex flex-col md:flex-row items-center gap-6 md:gap-0 mb-14 last:mb-0 ${isLeft ? '' : 'md:flex-row-reverse'}`}>
+                                    {/* Card side */}
+                                    <div className={`w-full md:w-[46%] ${isLeft ? 'md:pr-12' : 'md:pl-12'}`}>
+                                        <DmrvStepCard step={s.step} title={s.title} desc={s.desc} color={s.color} />
                                     </div>
-                                    <h3 className="text-base font-bold text-white mb-2">{s.title}</h3>
-                                    <p className="text-muted text-xs leading-relaxed">{s.desc}</p>
+
+                                    {/* Center dot on timeline */}
+                                    <div className="hidden md:flex w-[8%] justify-center relative">
+                                        <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{
+                                            background: `${s.color}20`,
+                                            border: `2px solid ${s.color}`,
+                                            boxShadow: `0 0 20px ${s.color}30`,
+                                        }}>
+                                            <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
+                                        </div>
+                                    </div>
+
+                                    {/* Icon + mini label side */}
+                                    <div className={`w-full md:w-[46%] ${isLeft ? 'md:pl-12' : 'md:pr-12'}`}>
+                                        <div className={`flex items-center gap-5 ${isLeft ? '' : 'md:flex-row-reverse md:text-right'}`}>
+                                            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0" style={{
+                                                background: `${s.color}08`,
+                                                border: `1px solid ${s.color}20`,
+                                            }}>
+                                                {s.icon}
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: s.color }}>
+                                                    Step {s.step}
+                                                </div>
+                                                <div className="text-sm text-muted leading-relaxed hidden md:block">
+                                                    {s.desc.split('.')[0]}.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                {i < 3 && <div className="wf-line hidden md:block" />}
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
 
                     {/* Trust badge */}

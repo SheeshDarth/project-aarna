@@ -1,9 +1,8 @@
 import { createContext, useContext } from 'react'
-import type { AarnaProject } from '../hooks/useAarna'
+import type { AarnaProject, AarnaListing } from '../hooks/useAarna'
 
 /**
- * AarnaContext — shares a single useAarna() instance across all pages
- * so that deploying on /developer makes the client available on /validator, etc.
+ * AarnaContext — shares a single useAarna() instance across all pages.
  */
 export interface AarnaContextValue {
     appId: bigint | null
@@ -11,6 +10,10 @@ export interface AarnaContextValue {
     busy: boolean
     projectCount: number
     projects: AarnaProject[]
+    totalCreditsIssued: number
+    listings: AarnaListing[]
+    listingCount: number
+    tokenBalance: number
     deploy: () => Promise<void>
     setValidator: (addr: string) => Promise<void>
     ensureToken: () => Promise<void>
@@ -19,6 +22,11 @@ export interface AarnaContextValue {
     rejectProject: (projectId: number) => Promise<void>
     issueCredits: (projectId: number) => Promise<void>
     optInToAsset: () => Promise<void>
+    listForSale: (amount: number, pricePerToken: number) => Promise<void>
+    buyListing: (listingId: number) => Promise<void>
+    cancelListing: (listingId: number) => Promise<void>
+    refreshProjects: () => Promise<void>
+    fetchTokenBalance: () => Promise<void>
 }
 
 const AarnaContext = createContext<AarnaContextValue | null>(null)

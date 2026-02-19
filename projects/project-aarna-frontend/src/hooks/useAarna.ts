@@ -8,29 +8,31 @@ import {
     getIndexerConfigFromViteEnvironment,
 } from '../utils/network/getAlgoClientConfigs'
 import { AarnaRegistryFactory } from '../contracts/AarnaRegistry'
-import algosdk, { AtomicTransactionComposer } from 'algosdk'
 
-/* ───────────────── Shared Project Type ───────────────── */
+/* ───────────────── Types ───────────────── */
 export interface AarnaProject {
-    /** On-chain index (0..3) */
     id: number
     name: string
     location: string
     ecosystem: string
     cid: string
-    /** 0=Pending, 1=Verified, 2=Rejected, 3=Credits Issued */
     status: 'pending' | 'verified' | 'rejected' | 'issued'
     credits: number
     submitter: string
 }
 
+export interface AarnaListing {
+    id: number
+    seller: string
+    amount: number
+    pricePerToken: number
+    active: boolean
+}
+
 /**
- * useAarna — central hook for all AarnaRegistry contract interactions.
- *
- * Supports both Live (Testnet) and Demo modes.
- * In Demo mode, all calls return mock responses without touching the chain.
+ * useAarna — central hook for all AarnaRegistry contract interactions (live mode).
  */
-export function useAarna(demo: boolean) {
+export function useAarna() {
     const { transactionSigner, activeAddress } = useWallet()
     const { enqueueSnackbar } = useSnackbar()
 
@@ -40,6 +42,9 @@ export function useAarna(demo: boolean) {
     const [busy, setBusy] = useState(false)
     const [projectCount, setProjectCount] = useState(0)
     const [projects, setProjects] = useState<AarnaProject[]>([])
+    const [totalCreditsIssued, setTotalCreditsIssued] = useState(0)
+    const [listings, setListings] = useState<AarnaListing[]>([])
+    const [listingCount, setListingCount] = useState(0)
 
     const algorand = useMemo(() => {
         const algodConfig = getAlgodConfigFromViteEnvironment()
@@ -50,38 +55,50 @@ export function useAarna(demo: boolean) {
     }, [transactionSigner])
 
     const ensureWallet = useCallback(() => {
-        if (demo) return true
         if (!activeAddress) {
             enqueueSnackbar('Connect a wallet first', { variant: 'warning' })
             return false
         }
         return true
-    }, [demo, activeAddress, enqueueSnackbar])
+    }, [activeAddress, enqueueSnackbar])
 
     const needClient = useCallback(() => {
-        if (demo) return true
         if (!appClient) {
             enqueueSnackbar('Deploy the app first', { variant: 'warning' })
             return false
         }
         return true
-    }, [demo, appClient, enqueueSnackbar])
+    }, [appClient, enqueueSnackbar])
 
-    /* ── Helper: update a single project's status in local state ── */
+    const parseError = useCallback((e: any): string => {
+        const msg = e?.message || String(e)
+        if (msg.includes('unauthorized: admin only')) return 'Only the admin can perform this action'
+        if (msg.includes('unauthorized: validator only')) return 'Only the validator can perform this action'
+        if (msg.includes('max projects reached')) return 'Maximum of 4 projects reached'
+        if (msg.includes('max listings reached')) return 'Maximum of 4 listings reached'
+        if (msg.includes('project not pending')) return 'Project is not in pending status'
+        if (msg.includes('project not verified')) return 'Project must be verified before issuing credits'
+        if (msg.includes('listing not active')) return 'This listing is no longer active'
+        if (msg.includes('insufficient payment')) return 'Not enough ALGO sent for this purchase'
+        if (msg.includes('only seller can cancel')) return 'Only the seller can cancel this listing'
+        if (msg.includes('no AARNA token')) return 'Create the AARNA token first'
+        return msg.length > 120 ? msg.slice(0, 120) + '…' : msg
+    }, [])
+
     const updateProjectStatus = useCallback((id: number, status: AarnaProject['status'], credits?: number) => {
         setProjects(prev => prev.map(p =>
             p.id === id ? { ...p, status, credits: credits ?? p.credits } : p
         ))
     }, [])
 
-    /* ── Helper: fetch projects from on-chain global state ── */
+    const STATUS_MAP: Record<number, AarnaProject['status']> = {
+        0: 'pending', 1: 'pending', 2: 'verified', 3: 'rejected', 4: 'issued',
+    }
+
     const fetchOnChainProjects = useCallback(async (client: any) => {
         try {
             const state = await client.state.global.getAll()
             const count = Number(state.projectCount ?? 0)
-            const statusMap: Record<number, AarnaProject['status']> = {
-                0: 'pending', 1: 'verified', 2: 'rejected', 3: 'issued',
-            }
             const onChain: AarnaProject[] = []
             for (let i = 0; i < Math.min(count, 4); i++) {
                 const name = state[`p${i}Name`]?.asString?.() ?? state[`p${i}Name`] ?? ''
@@ -98,7 +115,7 @@ export function useAarna(demo: boolean) {
                         location: typeof location === 'string' ? location : String(location),
                         ecosystem: typeof ecosystem === 'string' ? ecosystem : String(ecosystem),
                         cid: typeof cid === 'string' ? cid : String(cid),
-                        status: statusMap[statusNum] ?? 'pending',
+                        status: STATUS_MAP[statusNum] ?? 'pending',
                         credits,
                         submitter: typeof submitter === 'string' ? submitter : String(submitter),
                     })
@@ -106,19 +123,39 @@ export function useAarna(demo: boolean) {
             }
             setProjects(onChain)
             setProjectCount(count)
+            setTotalCreditsIssued(Number(state.totalCreditsIssued ?? 0))
+
+            // Fetch listings
+            const lCount = Number(state.listingCount ?? 0)
+            const onChainListings: AarnaListing[] = []
+            for (let i = 0; i < Math.min(lCount, 4); i++) {
+                const seller = state[`l${i}Seller`] ?? ''
+                const amount = Number(state[`l${i}Amount`] ?? 0)
+                const price = Number(state[`l${i}Price`] ?? 0)
+                const active = Number(state[`l${i}Active`] ?? 0) === 1
+                onChainListings.push({
+                    id: i,
+                    seller: typeof seller === 'string' ? seller : String(seller),
+                    amount,
+                    pricePerToken: price,
+                    active,
+                })
+            }
+            setListings(onChainListings)
+            setListingCount(lCount)
         } catch (e) {
-            console.warn('Could not fetch on-chain projects:', e)
+            console.warn('Could not fetch on-chain state:', e)
         }
     }, [])
+
+    const refreshProjects = useCallback(async () => {
+        if (!appClient) return
+        await fetchOnChainProjects(appClient)
+    }, [appClient, fetchOnChainProjects])
 
     // ─── Deploy ───
     const deploy = useCallback(async () => {
         if (!ensureWallet()) return
-        if (demo) {
-            setAppId(BigInt(999_001))
-            enqueueSnackbar('Demo: App deployed (ID: 999001)', { variant: 'success' })
-            return
-        }
         setBusy(true)
         try {
             const factory = new AarnaRegistryFactory({
@@ -126,294 +163,233 @@ export function useAarna(demo: boolean) {
                 defaultSender: activeAddress!,
                 defaultSigner: transactionSigner,
             })
-            const { appClient: client } = await factory.deploy({
-                createParams: {
-                    method: 'init',
-                    args: [],
-                    maxFee: AlgoAmount.MicroAlgo(20_000),
-                },
-                populateAppCallResources: true,
-            })
+            const { appClient: client } = await factory.send.create.init({ args: [], populateAppCallResources: false })
             setAppClient(client)
             setAppId(client.appId)
-            // Fetch any existing on-chain projects (if redeployed)
             await fetchOnChainProjects(client)
             enqueueSnackbar(`App deployed! ID: ${client.appId}`, { variant: 'success' })
         } catch (e: any) {
-            console.error('Deploy error:', e)
-            enqueueSnackbar(e?.message || 'Deploy failed', { variant: 'error' })
+            enqueueSnackbar(parseError(e), { variant: 'error' })
         } finally {
             setBusy(false)
         }
-    }, [demo, ensureWallet, algorand, activeAddress, transactionSigner, enqueueSnackbar, fetchOnChainProjects])
+    }, [ensureWallet, algorand, activeAddress, transactionSigner, enqueueSnackbar, fetchOnChainProjects, parseError])
 
     // ─── Set Validator ───
     const setValidator = useCallback(async (addr: string) => {
         if (!ensureWallet() || !needClient()) return
-        if (demo) {
-            enqueueSnackbar('Demo: Validator set', { variant: 'success' })
-            return
-        }
         setBusy(true)
         try {
-            await appClient.send.setValidator({
-                args: { addr },
-                populateAppCallResources: true,
-            })
+            await appClient.send.setValidator({ args: { addr }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
             enqueueSnackbar('Validator set', { variant: 'success' })
-        } catch (e: any) {
-            console.error('Set validator error:', e)
-            enqueueSnackbar(e?.message || 'Set validator failed', { variant: 'error' })
-        } finally {
-            setBusy(false)
-        }
-    }, [demo, ensureWallet, needClient, appClient, enqueueSnackbar])
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, needClient, appClient, enqueueSnackbar, parseError])
 
     // ─── Ensure Token ───
     const ensureToken = useCallback(async () => {
         if (!ensureWallet() || !needClient()) return
-        if (demo) {
-            const fakeId = BigInt(999_002)
-            setAssetId(fakeId)
-            enqueueSnackbar(`Demo: AARNA token ready (ASA ${fakeId})`, { variant: 'success' })
-            return
-        }
         setBusy(true)
         try {
-            // Fund the app account so it can hold the ASA (min balance requirement)
             const appAddr = appClient.appAddress
+            // Fund app for MBR + inner txn fees
             await algorand.send.payment({
-                sender: activeAddress!,
-                receiver: appAddr,
-                amount: AlgoAmount.Algo(1),
-                signer: transactionSigner,
+                sender: activeAddress!, receiver: appAddr,
+                amount: AlgoAmount.Algo(1), signer: transactionSigner,
             })
             const r = await appClient.send.ensureToken({
-                args: [],
-                populateAppCallResources: true,
-                coverAppCallInnerTransactionFees: true,
-                maxFee: AlgoAmount.MicroAlgo(20_000),
+                args: [], sender: activeAddress!, signer: transactionSigner,
+                populateAppCallResources: false,
+                extraFee: AlgoAmount.MicroAlgo(2_000),
             })
             const id = r?.return as bigint | undefined
             if (id) setAssetId(id)
             enqueueSnackbar(`AARNA token ready: ASA ${id?.toString()}`, { variant: 'success' })
-        } catch (e: any) {
-            console.error('Ensure token error:', e)
-            enqueueSnackbar(e?.message || 'Ensure token failed', { variant: 'error' })
-        } finally {
-            setBusy(false)
-        }
-    }, [demo, ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, enqueueSnackbar])
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
     // ─── Submit Project ───
     const submitProject = useCallback(async (
-        name: string,
-        location: string,
-        ecosystem: string,
-        cid: string,
-    ) => {
-        if (!ensureWallet() || !needClient()) return
-        if (demo) {
-            const idx = projectCount
-            const newProject: AarnaProject = {
-                id: idx,
-                name,
-                location,
-                ecosystem,
-                cid,
-                status: 'pending',
-                credits: 0,
-                submitter: activeAddress || 'demo-address',
-            }
-            setProjects(prev => [...prev, newProject])
-            setProjectCount(idx + 1)
-            enqueueSnackbar(`Demo: Project #${idx} submitted`, { variant: 'success' })
-            return idx
-        }
+        name: string, location: string, ecosystem: string, cid: string,
+    ): Promise<number | undefined> => {
+        if (!ensureWallet() || !needClient()) return undefined
         setBusy(true)
         try {
-            const r = await appClient.send.submitProject({
-                args: { name, location, ecosystem, cid },
-                populateAppCallResources: true,
-            })
-            const idx = r?.return as bigint | undefined
-            const projectIdx = Number(idx ?? 0)
-            const newProject: AarnaProject = {
-                id: projectIdx,
-                name,
-                location,
-                ecosystem,
-                cid,
-                status: 'pending',
-                credits: 0,
-                submitter: activeAddress || '',
-            }
-            setProjects(prev => [...prev, newProject])
-            setProjectCount(projectIdx + 1)
-            enqueueSnackbar(`Project #${projectIdx} submitted on-chain!`, { variant: 'success' })
-            return projectIdx
-        } catch (e: any) {
-            console.error('Submit error:', e)
-            enqueueSnackbar(e?.message || 'Submit failed', { variant: 'error' })
-        } finally {
-            setBusy(false)
-        }
-    }, [demo, ensureWallet, needClient, appClient, activeAddress, projectCount, enqueueSnackbar])
+            const r = await appClient.send.submitProject({ args: { name, location, ecosystem, cid }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
+            const idx = Number(r?.return ?? 0)
+            setProjects(prev => [...prev, { id: idx, name, location, ecosystem, cid, status: 'pending', credits: 0, submitter: activeAddress || '' }])
+            setProjectCount(idx + 1)
+            enqueueSnackbar(`Project #${idx} submitted on-chain!`, { variant: 'success' })
+            return idx
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }); return undefined }
+        finally { setBusy(false) }
+    }, [ensureWallet, needClient, appClient, activeAddress, enqueueSnackbar, parseError])
 
     // ─── Approve Project ───
     const approveProject = useCallback(async (projectId: number, credits: number) => {
         if (!ensureWallet() || !needClient()) return
-        if (demo) {
-            updateProjectStatus(projectId, 'verified', credits)
-            enqueueSnackbar(`Demo: Project #${projectId} approved (${credits} credits)`, { variant: 'success' })
-            return
-        }
         setBusy(true)
         try {
-            await appClient.send.approveProject({
-                args: { projectId: BigInt(projectId), credits: BigInt(credits) },
-                populateAppCallResources: true,
-            })
-            // Verify on-chain status updated
-            const statusResult = await appClient.send.getProjectStatus({ args: { projectId: BigInt(projectId) } })
-            const onChainStatus = Number(statusResult?.return ?? 0)
-            if (onChainStatus === 2) {
-                updateProjectStatus(projectId, 'verified', credits)
-                enqueueSnackbar(`Project #${projectId} approved on-chain! Status verified ✅`, { variant: 'success' })
-            } else {
-                enqueueSnackbar(`Approve sent but on-chain status is ${onChainStatus} (expected 2). Try again.`, { variant: 'warning' })
-            }
-        } catch (e: any) {
-            console.error('Approve error:', e)
-            enqueueSnackbar(e?.message || 'Approve failed', { variant: 'error' })
-        } finally {
-            setBusy(false)
-        }
-    }, [demo, ensureWallet, needClient, appClient, updateProjectStatus, enqueueSnackbar])
+            await appClient.send.approveProject({ args: { projectId: BigInt(projectId), credits: BigInt(credits) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
+            updateProjectStatus(projectId, 'verified', credits)
+            enqueueSnackbar(`Project #${projectId} approved!`, { variant: 'success' })
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, needClient, appClient, updateProjectStatus, enqueueSnackbar, parseError])
 
     // ─── Reject Project ───
     const rejectProject = useCallback(async (projectId: number) => {
         if (!ensureWallet() || !needClient()) return
-        if (demo) {
-            updateProjectStatus(projectId, 'rejected')
-            enqueueSnackbar(`Demo: Project #${projectId} rejected`, { variant: 'info' })
-            return
-        }
         setBusy(true)
         try {
-            await appClient.send.rejectProject({
-                args: { projectId: BigInt(projectId) },
-                populateAppCallResources: true,
-            })
+            await appClient.send.rejectProject({ args: { projectId: BigInt(projectId) }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: false })
             updateProjectStatus(projectId, 'rejected')
             enqueueSnackbar(`Project #${projectId} rejected`, { variant: 'info' })
-        } catch (e: any) {
-            console.error('Reject error:', e)
-            enqueueSnackbar(e?.message || 'Reject failed', { variant: 'error' })
-        } finally {
-            setBusy(false)
-        }
-    }, [demo, ensureWallet, needClient, appClient, updateProjectStatus, enqueueSnackbar])
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, needClient, appClient, updateProjectStatus, enqueueSnackbar, parseError])
 
     // ─── Issue Credits ───
     const issueCredits = useCallback(async (projectId: number) => {
         if (!ensureWallet() || !needClient()) return
-        if (demo) {
-            updateProjectStatus(projectId, 'issued')
-            enqueueSnackbar(`Demo: Credits issued for Project #${projectId}`, { variant: 'success' })
-            return
-        }
         setBusy(true)
         try {
-            // First, verify on-chain that the project is actually approved (status=2)
-            const statusResult = await appClient.send.getProjectStatus({ args: { projectId: BigInt(projectId) } })
-            const onChainStatus = Number(statusResult?.return ?? 0)
-            if (onChainStatus !== 2) {
-                const statusNames: Record<number, string> = { 0: 'None', 1: 'Pending', 2: 'Verified', 3: 'Rejected' }
-                enqueueSnackbar(
-                    `Cannot issue credits — project on-chain status is "${statusNames[onChainStatus] ?? onChainStatus}" (must be "Verified"). Please approve the project first.`,
-                    { variant: 'warning' }
-                )
-                setBusy(false)
-                return
-            }
-            // Fund the app account for inner asset transfer fees
             const appAddr = appClient.appAddress
+            // Fund app for inner txn fees
             await algorand.send.payment({
-                sender: activeAddress!,
-                receiver: appAddr,
-                amount: AlgoAmount.MicroAlgo(200_000),
-                signer: transactionSigner,
+                sender: activeAddress!, receiver: appAddr,
+                amount: AlgoAmount.MicroAlgo(200_000), signer: transactionSigner,
             })
-            await appClient.send.issueCredits({
-                args: { projectId: BigInt(projectId) },
-                populateAppCallResources: true,
-                coverAppCallInnerTransactionFees: true,
-                maxFee: AlgoAmount.MicroAlgo(20_000),
+
+            // Look up submitter from our projects state
+            const project = projects.find(p => p.id === projectId)
+            const submitter = project?.submitter || ''
+
+            const r = await appClient.send.issueCredits({
+                args: { projectId: BigInt(projectId) }, sender: activeAddress!, signer: transactionSigner,
+                populateAppCallResources: false,
+                extraFee: AlgoAmount.MicroAlgo(2_000),
+                // Manually pass foreign references the contract needs
+                accountReferences: submitter ? [submitter] : [],
+                assetReferences: assetId ? [BigInt(assetId)] : [],
             })
+            const creds = Number(r?.return ?? 0)
             updateProjectStatus(projectId, 'issued')
-            enqueueSnackbar(`Credits issued for Project #${projectId}! 🎉`, { variant: 'success' })
-        } catch (e: any) {
-            console.error('Issue credits error:', e)
-            enqueueSnackbar(e?.message || 'Issue failed', { variant: 'error' })
-        } finally {
-            setBusy(false)
-        }
-    }, [demo, ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, updateProjectStatus, enqueueSnackbar])
+            setTotalCreditsIssued(prev => prev + creds)
+            enqueueSnackbar(`Credits issued! (${creds} AARNA tokens)`, { variant: 'success' })
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, projects, assetId, updateProjectStatus, enqueueSnackbar, parseError])
 
     // ─── Opt-In to AARNA ASA ───
     const optInToAsset = useCallback(async () => {
         if (!ensureWallet()) return
-        if (demo) {
-            enqueueSnackbar('Demo: Opted in to AARNA token', { variant: 'success' })
-            return
-        }
-        if (!activeAddress) {
-            enqueueSnackbar('Connect a wallet first', { variant: 'warning' })
-            return
-        }
+        if (!activeAddress) return
         setBusy(true)
         try {
             let id = assetId
             if (!id && appClient) {
                 const r = await appClient.send.getAssetId({ args: [] })
-                id = r?.return as bigint | undefined
+                id = (r?.return as bigint | undefined) ?? null
                 if (id) setAssetId(id)
             }
-            if (!id) {
-                enqueueSnackbar('No AARNA token yet — click "Create Token" first', { variant: 'warning' })
-                setBusy(false)
-                return
-            }
-            await algorand.send.assetOptIn({
-                sender: activeAddress,
-                assetId: BigInt(id),
-                signer: transactionSigner,
+            if (!id) { enqueueSnackbar('No AARNA token yet', { variant: 'warning' }); setBusy(false); return }
+            await algorand.send.assetOptIn({ sender: activeAddress, assetId: BigInt(id), signer: transactionSigner })
+            enqueueSnackbar('Opted in to AARNA!', { variant: 'success' })
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, appClient, assetId, algorand, activeAddress, transactionSigner, enqueueSnackbar, parseError])
+
+    // ═══════════════════════════════════════════════════
+    //  Token Balance (on-chain + simulated marketplace adjustments)
+    // ═══════════════════════════════════════════════════
+
+    const [onChainBalance, setOnChainBalance] = useState<number>(0)
+    const [balanceAdjustments, setBalanceAdjustments] = useState<Record<string, number>>({})
+
+    // Displayed balance = on-chain + marketplace adjustments for active wallet
+    const tokenBalance = onChainBalance + (activeAddress ? (balanceAdjustments[activeAddress] || 0) : 0)
+
+    const fetchTokenBalance = useCallback(async () => {
+        if (!activeAddress || !assetId) { setOnChainBalance(0); return }
+        try {
+            const algodConfig = getAlgodConfigFromViteEnvironment()
+            const baseUrl = `${algodConfig.server}${algodConfig.port ? ':' + algodConfig.port : ''}`
+            const resp = await fetch(`${baseUrl}/v2/accounts/${activeAddress}`, {
+                headers: algodConfig.token ? { 'X-Algo-API-Token': String(algodConfig.token) } : {},
             })
-            enqueueSnackbar('Opted in to AARNA token!', { variant: 'success' })
-        } catch (e: any) {
-            console.error('Opt-in error:', e)
-            enqueueSnackbar(e?.message || 'Opt-in failed', { variant: 'error' })
-        } finally {
-            setBusy(false)
+            if (!resp.ok) { setOnChainBalance(0); return }
+            const data = await resp.json()
+            const assets = data?.assets || data?.account?.assets || []
+            const asset = assets.find((a: any) => BigInt(a['asset-id']) === BigInt(assetId))
+            setOnChainBalance(asset ? Number(asset.amount) : 0)
+        } catch {
+            setOnChainBalance(0)
         }
-    }, [demo, ensureWallet, appClient, assetId, algorand, activeAddress, transactionSigner, enqueueSnackbar])
+    }, [activeAddress, assetId])
+
+    // ═══════════════════════════════════════════════════
+    //  Marketplace Methods (in-memory simulation)
+    //  Listing = no balance change
+    //  Buying  = seller balance ↓, buyer balance ↑
+    //  Cancel  = no balance change
+    // ═══════════════════════════════════════════════════
+
+    // ─── List For Sale (no balance change — tokens stay in wallet until sold) ───
+    const listForSale = useCallback(async (amount: number, pricePerToken: number) => {
+        if (!ensureWallet()) return
+        setBusy(true)
+        try {
+            await new Promise(r => setTimeout(r, 600))
+            const idx = listingCount
+            setListings(prev => [...prev, { id: idx, seller: activeAddress || '', amount, pricePerToken, active: true }])
+            setListingCount(idx + 1)
+            enqueueSnackbar(`Listed ${amount} AARNA tokens at ${pricePerToken} µALGO each!`, { variant: 'success' })
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, activeAddress, listingCount, enqueueSnackbar, parseError])
+
+    // ─── Buy Listing (seller loses tokens, buyer gains tokens) ───
+    const buyListing = useCallback(async (listingId: number) => {
+        if (!ensureWallet()) return
+        const listing = listings.find(l => l.id === listingId)
+        if (!listing || !listing.active) {
+            enqueueSnackbar('Listing not available', { variant: 'warning' })
+            return
+        }
+        setBusy(true)
+        try {
+            await new Promise(r => setTimeout(r, 600))
+            setListings(prev => prev.map(l => l.id === listingId ? { ...l, active: false } : l))
+            // Adjust balances: seller loses, buyer gains
+            setBalanceAdjustments(prev => ({
+                ...prev,
+                [listing.seller]: (prev[listing.seller] || 0) - listing.amount,
+                [activeAddress!]: (prev[activeAddress!] || 0) + listing.amount,
+            }))
+            enqueueSnackbar(`Bought ${listing.amount} AARNA tokens from ${listing.seller.slice(0, 6)}…!`, { variant: 'success' })
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, activeAddress, listings, enqueueSnackbar, parseError])
+
+    // ─── Cancel Listing (no balance change — tokens were never moved) ───
+    const cancelListing = useCallback(async (listingId: number) => {
+        if (!ensureWallet()) return
+        setBusy(true)
+        try {
+            await new Promise(r => setTimeout(r, 400))
+            setListings(prev => prev.map(l => l.id === listingId ? { ...l, active: false } : l))
+            enqueueSnackbar('Listing cancelled', { variant: 'info' })
+        } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
+        finally { setBusy(false) }
+    }, [ensureWallet, enqueueSnackbar, parseError])
 
     return {
-        // State
-        appId,
-        assetId,
-        busy,
-        projectCount,
-        projects,
-        // Actions
-        deploy,
-        setValidator,
-        ensureToken,
-        submitProject,
-        approveProject,
-        rejectProject,
-        issueCredits,
-        optInToAsset,
+        appId, assetId, busy, projectCount, projects, totalCreditsIssued,
+        listings, listingCount, tokenBalance,
+        deploy, setValidator, ensureToken, submitProject,
+        approveProject, rejectProject, issueCredits, optInToAsset,
+        listForSale, buyListing, cancelListing, refreshProjects, fetchTokenBalance,
     }
 }
