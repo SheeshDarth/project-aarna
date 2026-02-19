@@ -81,7 +81,6 @@ export default function Developer() {
     const [location, setLocation] = useState('')
     const [ecosystem, setEcosystem] = useState('Mangrove')
     const [cid, setCid] = useState('')
-    const [validatorAddr, setValidatorAddr] = useState('')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -172,33 +171,6 @@ export default function Developer() {
                             </button>
                         </div>
 
-                        {/* Set Validator — Admin only */}
-                        <div className="g-card p-6">
-                            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <IconZap size={18} color="#10B981" /> Set Validator
-                            </h2>
-                            <p className="text-sm text-muted mb-3">
-                                Assign a wallet address that will be authorized to approve/reject projects and issue credits.
-                            </p>
-                            <div className="flex gap-3 items-end">
-                                <div className="flex-1">
-                                    <input
-                                        value={validatorAddr}
-                                        onChange={(e) => setValidatorAddr(e.target.value)}
-                                        placeholder="Paste validator's Algorand address"
-                                        className="w-full rounded-lg border border-white/10 bg-[#0b1222] px-4 py-2.5 text-sm font-mono text-white placeholder:text-white/25 focus:border-[#10B981] focus:outline-none"
-                                    />
-                                </div>
-                                <button
-                                    onClick={() => aarna.setValidator(validatorAddr)}
-                                    disabled={aarna.busy || !validatorAddr}
-                                    className="rounded-xl px-4 py-2.5 font-semibold text-white shadow-lg transition-all disabled:opacity-50"
-                                    style={{ background: 'linear-gradient(135deg, #10B981, #0D6B4A)', boxShadow: '0 4px 20px rgba(16,185,129,0.2)' }}
-                                >
-                                    Set Validator
-                                </button>
-                            </div>
-                        </div>
 
                         {/* Submit Form */}
                         <form onSubmit={handleSubmit} className="g-card p-6">

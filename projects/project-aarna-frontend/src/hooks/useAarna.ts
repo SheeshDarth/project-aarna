@@ -42,10 +42,14 @@ export function useAarna() {
 
     const [appClient, setAppClient] = useState<any>(null)
     const [appId, setAppId] = useState<bigint | null>(() => {
+        const env = import.meta.env.VITE_APP_ID
+        if (env) return BigInt(env)
         const saved = localStorage.getItem(LS_APP_ID)
         return saved ? BigInt(saved) : null
     })
     const [assetId, setAssetId] = useState<bigint | null>(() => {
+        const env = import.meta.env.VITE_ASSET_ID
+        if (env) return BigInt(env)
         const saved = localStorage.getItem(LS_ASSET_ID)
         return saved ? BigInt(saved) : null
     })
@@ -171,27 +175,40 @@ export function useAarna() {
     }, [appClient, fetchOnChainProjects])
 
     // ═══════════════════════════════════════════════════
-    //  Auto-reconnect to existing contract on page load
+    //  Read-only connect (no wallet needed — for Registry)
     // ═══════════════════════════════════════════════════
     useEffect(() => {
-        if (!activeAddress || !appId || appClient) return
-        const reconnect = async () => {
+        if (!appId || appClient) return
+        const connectReadOnly = async () => {
             try {
-                const factory = new AarnaRegistryFactory({
-                    algorand,
-                    defaultSender: activeAddress,
-                    defaultSigner: transactionSigner,
-                })
+                const factory = new AarnaRegistryFactory({ algorand })
                 const client = factory.getAppClientById({ appId })
                 setAppClient(client)
                 await fetchOnChainProjects(client)
-                enqueueSnackbar(`Reconnected to app ${appId}`, { variant: 'info' })
             } catch (e) {
-                console.warn('Auto-reconnect failed:', e)
+                console.warn('Read-only connect failed:', e)
             }
         }
-        reconnect()
-    }, [activeAddress, appId, appClient, algorand, transactionSigner, fetchOnChainProjects, enqueueSnackbar])
+        connectReadOnly()
+    }, [appId, appClient, algorand, fetchOnChainProjects])
+
+    // ═══════════════════════════════════════════════════
+    //  Upgrade to full client once wallet connects
+    // ═══════════════════════════════════════════════════
+    useEffect(() => {
+        if (!activeAddress || !appId) return
+        try {
+            const factory = new AarnaRegistryFactory({
+                algorand,
+                defaultSender: activeAddress,
+                defaultSigner: transactionSigner,
+            })
+            const client = factory.getAppClientById({ appId })
+            setAppClient(client)
+        } catch (e) {
+            console.warn('Wallet reconnect failed:', e)
+        }
+    }, [activeAddress, appId, algorand, transactionSigner])
 
     // ─── Deploy ───
     const deploy = useCallback(async () => {

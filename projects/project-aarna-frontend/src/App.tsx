@@ -1,10 +1,12 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { SupportedWallet, WalletId, WalletManager, WalletProvider } from '@txnlab/use-wallet-react'
+import { useWallet } from '@txnlab/use-wallet-react'
 import { SnackbarProvider } from 'notistack'
 import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 import { useAarna } from './hooks/useAarna'
 import { AarnaProvider } from './context/AarnaContext'
 import { Navbar1 } from './components/ui/navbar-1'
+import { isValidator } from './constants/roles'
 import Landing from './pages/Landing'
 import Developer from './pages/Developer'
 import Validator from './pages/Validator'
@@ -69,6 +71,8 @@ export default function App() {
  */
 function AppInner() {
   const aarna = useAarna()
+  const { activeAddress } = useWallet()
+  const validatorWallet = isValidator(activeAddress)
 
   return (
     <AarnaProvider value={aarna}>
@@ -76,8 +80,9 @@ function AppInner() {
         <Navbar1 />
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/developer" element={<Developer />} />
-          <Route path="/validator" element={<Validator />} />
+          {/* Validator sees /validator, redirected away from /developer */}
+          <Route path="/developer" element={validatorWallet ? <Navigate to="/validator" replace /> : <Developer />} />
+          <Route path="/validator" element={validatorWallet ? <Validator /> : <Navigate to="/developer" replace />} />
           <Route path="/registry" element={<Registry />} />
           <Route path="/marketplace" element={<Marketplace />} />
         </Routes>
@@ -85,3 +90,4 @@ function AppInner() {
     </AarnaProvider>
   )
 }
+

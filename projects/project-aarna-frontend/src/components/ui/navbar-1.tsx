@@ -1,11 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { Menu, X, Wallet, LogOut, ChevronDown } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useWallet } from "@txnlab/use-wallet-react"
+import { isValidator } from "../../constants/roles"
 
 const Navbar1 = () => {
     const { activeAddress, wallets } = useWallet()
@@ -31,13 +32,20 @@ const Navbar1 = () => {
 
     const toggleMenu = () => setIsOpen(!isOpen)
 
-    const navItems = [
-        { label: "Home", to: "/" },
-        { label: "Developer", to: "/developer" },
-        { label: "Validator", to: "/validator" },
-        { label: "Marketplace", to: "/marketplace" },
-        { label: "Registry", to: "/registry" },
-    ]
+    // Role-based nav: validators see Validator, everyone else sees Developer
+    const navItems = useMemo(() => {
+        const base = [{ label: "Home", to: "/" }]
+        if (isValidator(activeAddress)) {
+            base.push({ label: "Validator", to: "/validator" })
+        } else {
+            base.push({ label: "Developer", to: "/developer" })
+        }
+        base.push(
+            { label: "Marketplace", to: "/marketplace" },
+            { label: "Registry", to: "/registry" },
+        )
+        return base
+    }, [activeAddress])
 
     const handleConnect = async (walletId: string) => {
         const wallet = wallets?.find(w => w.id === walletId)
