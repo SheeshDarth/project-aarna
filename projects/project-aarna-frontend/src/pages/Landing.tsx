@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useMotionValue, useMotionTemplate, motion } from 'framer-motion'
 import { generateRandomString } from '@/components/ui/evervault-card'
+import StarBorder from '@/components/StarBorder'
 
 function DmrvStepCard({ step, title, desc, color }: { step: string; title: string; desc: string; color: string }) {
     const mouseX = useMotionValue(0)
@@ -532,7 +533,9 @@ export default function Landing() {
                                 <div key={i} className={`flex flex-col md:flex-row items-center gap-6 md:gap-0 mb-14 last:mb-0 ${isLeft ? '' : 'md:flex-row-reverse'}`}>
                                     {/* Card side */}
                                     <div className={`w-full md:w-[46%] ${isLeft ? 'md:pr-12' : 'md:pl-12'}`}>
-                                        <DmrvStepCard step={s.step} title={s.title} desc={s.desc} color={s.color} />
+                                        <StarBorder color={s.color} speed="5s" className="w-full block">
+                                            <DmrvStepCard step={s.step} title={s.title} desc={s.desc} color={s.color} />
+                                        </StarBorder>
                                     </div>
 
                                     {/* Center dot on timeline */}
