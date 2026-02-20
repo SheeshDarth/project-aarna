@@ -1,6 +1,6 @@
 import { useAarnaContext } from '../context/AarnaContext'
 
-/* ── Inline SVG icons (replacing emojis) ── */
+
 function IconGlobe({ size = 20, color = '#00E5CC' }: { size?: number; color?: string }) {
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -86,7 +86,7 @@ export default function Registry() {
                     </p>
                 </div>
 
-                {/* ── Impact Summary ── */}
+                {/* Impact Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                     <div className="g-card stat-glow p-5 text-center">
                         <div className="flex justify-center mb-2"><IconShieldCheck size={24} color="#10B981" /></div>
@@ -112,7 +112,7 @@ export default function Registry() {
                     </div>
                 </div>
 
-                {/* ── All Projects ── */}
+                {/* All Projects */}
                 <h2 className="text-xl font-bold text-white mb-4">All Projects ({all.length})</h2>
                 {all.length === 0 ? (
                     <div className="g-card p-12 text-center">
@@ -201,7 +201,7 @@ export default function Registry() {
                     </div>
                 )}
 
-                {/* ── Explorer link ── */}
+                {/* Explorer link */}
                 <div className="mt-12 mb-12 text-center">
                     <a
                         href="https://testnet.explorer.perawallet.app/"

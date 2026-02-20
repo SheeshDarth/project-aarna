@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useAarnaContext } from '../context/AarnaContext'
 
-/* ── Inline SVG icons ── */
+
 function IconShieldCheck({ size = 20, color = '#10B981' }: { size?: number; color?: string }) {
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -107,7 +107,7 @@ export default function Validator() {
         await aarna.issueCredits(id)
     }
 
-    /* ── Wallet gate ── */
+
     if (!activeAddress) {
         return (
             <div className="page-enter pt-24 min-h-screen px-4 sm:px-6" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

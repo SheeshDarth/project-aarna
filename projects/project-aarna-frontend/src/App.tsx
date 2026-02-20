@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { SupportedWallet, WalletId, WalletManager, WalletProvider } from '@txnlab/use-wallet-react'
 import { useWallet } from '@txnlab/use-wallet-react'
@@ -8,10 +9,11 @@ import { AarnaProvider } from './context/AarnaContext'
 import { Navbar1 } from './components/ui/navbar-1'
 import { isValidator } from './constants/roles'
 import Landing from './pages/Landing'
-import Developer from './pages/Developer'
-import Validator from './pages/Validator'
-import Registry from './pages/Registry'
-import Marketplace from './pages/Marketplace'
+
+const Developer = lazy(() => import('./pages/Developer'))
+const Validator = lazy(() => import('./pages/Validator'))
+const Registry = lazy(() => import('./pages/Registry'))
+const Marketplace = lazy(() => import('./pages/Marketplace'))
 
 let supportedWallets: SupportedWallet[]
 if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
@@ -78,14 +80,15 @@ function AppInner() {
     <AarnaProvider value={aarna}>
       <div className="min-h-screen bg-[#0b1222]" data-theme="aarna">
         <Navbar1 />
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          {/* Validator sees /validator, redirected away from /developer */}
-          <Route path="/developer" element={validatorWallet ? <Navigate to="/validator" replace /> : <Developer />} />
-          <Route path="/validator" element={validatorWallet ? <Validator /> : <Navigate to="/developer" replace />} />
-          <Route path="/registry" element={<Registry />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-        </Routes>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#006994] border-t-transparent rounded-full animate-spin" /></div>}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/developer" element={validatorWallet ? <Navigate to="/validator" replace /> : <Developer />} />
+            <Route path="/validator" element={validatorWallet ? <Validator /> : <Navigate to="/developer" replace />} />
+            <Route path="/registry" element={<Registry />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+          </Routes>
+        </Suspense>
       </div>
     </AarnaProvider>
   )

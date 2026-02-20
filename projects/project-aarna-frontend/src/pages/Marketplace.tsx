@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useAarnaContext } from '../context/AarnaContext'
 
-/* ── SVG Icons ── */
+
 function IconStore({ size = 20, color = '#006994' }: { size?: number; color?: string }) {
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -83,10 +83,10 @@ export default function Marketplace() {
         setSellPrice('')
     }
 
-    /* ── Wallet gate ── */
+
     if (!walletConnected) {
         return (
-            <div className="ocean-page" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="page-enter" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div className="g-card" style={{ maxWidth: 420, textAlign: 'center', padding: '3rem 2rem' }}>
                     <IconWallet size={48} color="#006994" />
                     <h2 style={{ color: 'white', fontSize: '1.5rem', marginTop: '1rem' }}>Connect Wallet</h2>
@@ -99,10 +99,10 @@ export default function Marketplace() {
     }
 
     return (
-        <div className="ocean-page" style={{ paddingTop: '6rem', paddingBottom: '3rem', minHeight: '100vh' }}>
-            <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 1.5rem' }}>
+        <div className="page-enter pt-24 min-h-screen px-4 sm:px-6" style={{ paddingBottom: '3rem' }}>
+            <div className="mx-auto max-w-5xl">
 
-                {/* ── Header ── */}
+                {/* Header */}
                 <div style={{ marginBottom: '2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                         <IconStore size={28} color="#006994" />
@@ -115,7 +115,7 @@ export default function Marketplace() {
                     </p>
                 </div>
 
-                {/* ── Stats ── */}
+                {/* Stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                     <div className="g-card stat-glow" style={{ padding: '1.25rem', textAlign: 'center' }}>
                         <div className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: 1 }}>Active Listings</div>
@@ -139,7 +139,7 @@ export default function Marketplace() {
                     </div>
                 </div>
 
-                {/* ── Sell Form ── */}
+                {/* Sell Form */}
                 <div className="g-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
                     <h3 style={{ color: 'white', fontSize: '1.1rem', fontWeight: 600, margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                         <IconTag size={18} color="#00E5CC" />
@@ -196,7 +196,7 @@ export default function Marketplace() {
                     )}
                 </div>
 
-                {/* ── Active Listings ── */}
+                {/* Active Listings */}
                 <h3 style={{ color: 'white', fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <IconShoppingCart size={18} color="#006994" />
                     Active Listings
@@ -263,7 +263,7 @@ export default function Marketplace() {
                     </div>
                 )}
 
-                {/* ── All Listings (including sold) ── */}
+                {/* Completed Sales */}
                 {listings.filter(l => !l.active).length > 0 && (
                     <div style={{ marginTop: '2rem' }}>
                         <h3 style={{ color: 'white', fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', opacity: 0.7 }}>

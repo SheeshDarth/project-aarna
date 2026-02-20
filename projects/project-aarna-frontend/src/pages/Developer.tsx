@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useAarnaContext } from '../context/AarnaContext'
 
-/* ── Inline SVG icons ── */
+
 function IconBeaker({ size = 20, color = '#006994' }: { size?: number; color?: string }) {
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -95,7 +95,7 @@ export default function Developer() {
 
     const myProjects = aarna.projects
 
-    /* ── Wallet gate ── */
+
     if (!activeAddress) {
         return (
             <div className="page-enter pt-24 min-h-screen px-4 sm:px-6" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -125,7 +125,7 @@ export default function Developer() {
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-8">
-                    {/* ── Left: Setup + Submit ── */}
+                    {/* Left: Setup + Submit */}
                     <div className="space-y-6">
                         {/* Deploy & Token Setup */}
                         <div className="g-card p-6">
@@ -229,7 +229,7 @@ export default function Developer() {
                         </form>
                     </div>
 
-                    {/* ── Right: My Projects ── */}
+                    {/* Right: My Projects */}
                     <div className="g-card p-6">
                         <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                             <IconPackage size={20} color="#006994" /> My Submitted Projects
