@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+﻿import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useSnackbar } from 'notistack'
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
@@ -10,7 +10,6 @@ import {
 import { AarnaRegistryFactory } from '../contracts/AarnaRegistry'
 import { VALIDATOR_ADDRESS } from '../constants/roles'
 
-/* ───────────────── Types ───────────────── */
 export interface AarnaProject {
     id: number
     name: string
@@ -30,13 +29,9 @@ export interface AarnaListing {
     active: boolean
 }
 
-/* ───────────────── LocalStorage keys ───────────────── */
 const LS_APP_ID = 'aarna_app_id'
 const LS_ASSET_ID = 'aarna_asset_id'
 
-/**
- * useAarna — central hook for all AarnaRegistry contract interactions (live mode).
- */
 export function useAarna() {
     const { transactionSigner, activeAddress } = useWallet()
     const { enqueueSnackbar } = useSnackbar()
@@ -101,9 +96,9 @@ export function useAarna() {
         if (msg.includes('assert failed') || msg.includes('Error resolving execution info via simulate')) {
             if (msg.includes('pc=4245') || msg.includes('pc=3507')) return 'Unauthorized: only the validator wallet can approve/reject projects'
             if (msg.includes('pc=3497') || msg.includes('pc=2757')) return 'Unauthorized: only the admin wallet can perform this action'
-            return 'Transaction failed — the project may already be processed, or your wallet is not authorized'
+            return 'Transaction failed â€” the project may already be processed, or your wallet is not authorized'
         }
-        return msg.length > 120 ? msg.slice(0, 120) + '…' : msg
+        return msg.length > 120 ? msg.slice(0, 120) + 'â€¦' : msg
     }, [])
 
     const updateProjectStatus = useCallback((id: number, status: AarnaProject['status'], credits?: number) => {
@@ -181,9 +176,6 @@ export function useAarna() {
         await fetchOnChainProjects(appClient)
     }, [appClient, fetchOnChainProjects])
 
-    // ═══════════════════════════════════════════════════
-    //  Read-only connect (no wallet needed — for Registry)
-    // ═══════════════════════════════════════════════════
     useEffect(() => {
         if (!appId || appClient) return
         const connectReadOnly = async () => {
@@ -199,9 +191,6 @@ export function useAarna() {
         connectReadOnly()
     }, [appId, appClient, algorand, fetchOnChainProjects])
 
-    // ═══════════════════════════════════════════════════
-    //  Upgrade to full client once wallet connects
-    // ═══════════════════════════════════════════════════
     useEffect(() => {
         if (!activeAddress || !appId) return
         try {
@@ -217,7 +206,6 @@ export function useAarna() {
         }
     }, [activeAddress, appId, algorand, transactionSigner])
 
-    // ─── Deploy ───
     const deploy = useCallback(async () => {
         if (!ensureWallet()) return
         setBusy(true)
@@ -242,7 +230,6 @@ export function useAarna() {
         }
     }, [ensureWallet, algorand, activeAddress, transactionSigner, enqueueSnackbar, fetchOnChainProjects, parseError])
 
-    // ─── Set Validator ───
     const setValidator = useCallback(async (addr: string) => {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
@@ -253,7 +240,6 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, enqueueSnackbar, parseError])
 
-    // ─── Ensure Token ───
     const ensureToken = useCallback(async () => {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
@@ -279,7 +265,6 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
-    // ─── Submit Project ───
     const submitProject = useCallback(async (
         name: string, location: string, ecosystem: string, cid: string,
     ): Promise<number | undefined> => {
@@ -296,7 +281,6 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, activeAddress, enqueueSnackbar, parseError])
 
-    // ─── Approve Project ───
     const approveProject = useCallback(async (projectId: number, credits: number) => {
         if (!ensureWallet() || !needClient()) return
         if (activeAddress !== VALIDATOR_ADDRESS) {
@@ -313,7 +297,7 @@ export function useAarna() {
                     signer: transactionSigner,
                 })
                 console.log('[Aarna] Validator synced before approve')
-            } catch (_) { /* not admin — skip */ }
+            } catch (_) { /* not admin â€” skip */ }
 
             await appClient.send.approveProject({
                 args: { projectId: BigInt(projectId), credits: BigInt(credits) },
@@ -327,7 +311,6 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, updateProjectStatus, refreshProjects, enqueueSnackbar, parseError])
 
-    // ─── Reject Project ───
     const rejectProject = useCallback(async (projectId: number) => {
         if (!ensureWallet() || !needClient()) return
         if (activeAddress !== VALIDATOR_ADDRESS) {
@@ -344,7 +327,7 @@ export function useAarna() {
                     signer: transactionSigner,
                 })
                 console.log('[Aarna] Validator synced before reject')
-            } catch (_) { /* not admin — skip */ }
+            } catch (_) { /* not admin â€” skip */ }
 
             await appClient.send.rejectProject({
                 args: { projectId: BigInt(projectId) },
@@ -358,7 +341,6 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, updateProjectStatus, refreshProjects, enqueueSnackbar, parseError])
 
-    // ─── Issue Credits ───
     const issueCredits = useCallback(async (projectId: number) => {
         if (!ensureWallet() || !needClient()) return
         if (activeAddress !== VALIDATOR_ADDRESS) {
@@ -394,7 +376,6 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, projects, assetId, updateProjectStatus, enqueueSnackbar, parseError])
 
-    // ─── Opt-In to AARNA ASA ───
     const optInToAsset = useCallback(async () => {
         if (!ensureWallet()) return
         if (!activeAddress) return
@@ -413,14 +394,11 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, appClient, assetId, algorand, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
-    // ═══════════════════════════════════════════════════
-    //  Token Balance (on-chain + simulated marketplace adjustments)
-    // ═══════════════════════════════════════════════════
 
     const [onChainBalance, setOnChainBalance] = useState<number>(0)
     const [balanceAdjustments, setBalanceAdjustments] = useState<Record<string, number>>({})
 
-    // Displayed balance = on-chain + marketplace adjustments for active wallet
+
     const tokenBalance = onChainBalance + (activeAddress ? (balanceAdjustments[activeAddress] || 0) : 0)
 
     const fetchTokenBalance = useCallback(async () => {
@@ -441,14 +419,6 @@ export function useAarna() {
         }
     }, [activeAddress, assetId])
 
-    // ═══════════════════════════════════════════════════
-    //  Marketplace Methods (in-memory simulation)
-    //  Listing = no balance change
-    //  Buying  = seller balance ↓, buyer balance ↑
-    //  Cancel  = no balance change
-    // ═══════════════════════════════════════════════════
-
-    // ─── List For Sale (no balance change — tokens stay in wallet until sold) ───
     const listForSale = useCallback(async (amount: number, pricePerToken: number) => {
         if (!ensureWallet()) return
         setBusy(true)
@@ -457,12 +427,11 @@ export function useAarna() {
             const idx = listingCount
             setListings(prev => [...prev, { id: idx, seller: activeAddress || '', amount, pricePerToken, active: true }])
             setListingCount(idx + 1)
-            enqueueSnackbar(`Listed ${amount} AARNA tokens at ${pricePerToken} µALGO each!`, { variant: 'success' })
+            enqueueSnackbar(`Listed ${amount} AARNA tokens at ${pricePerToken} ÂµALGO each!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
     }, [ensureWallet, activeAddress, listingCount, enqueueSnackbar, parseError])
 
-    // ─── Buy Listing (seller loses tokens, buyer gains tokens) ───
     const buyListing = useCallback(async (listingId: number) => {
         if (!ensureWallet()) return
         const listing = listings.find(l => l.id === listingId)
@@ -474,18 +443,17 @@ export function useAarna() {
         try {
             await new Promise(r => setTimeout(r, 600))
             setListings(prev => prev.map(l => l.id === listingId ? { ...l, active: false } : l))
-            // Adjust balances: seller loses, buyer gains
+
             setBalanceAdjustments(prev => ({
                 ...prev,
                 [listing.seller]: (prev[listing.seller] || 0) - listing.amount,
                 [activeAddress!]: (prev[activeAddress!] || 0) + listing.amount,
             }))
-            enqueueSnackbar(`Bought ${listing.amount} AARNA tokens from ${listing.seller.slice(0, 6)}…!`, { variant: 'success' })
+            enqueueSnackbar(`Bought ${listing.amount} AARNA tokens from ${listing.seller.slice(0, 6)}â€¦!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
     }, [ensureWallet, activeAddress, listings, enqueueSnackbar, parseError])
 
-    // ─── Cancel Listing (no balance change — tokens were never moved) ───
     const cancelListing = useCallback(async (listingId: number) => {
         if (!ensureWallet()) return
         setBusy(true)

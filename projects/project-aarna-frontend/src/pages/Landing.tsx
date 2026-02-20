@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useMotionValue, useMotionTemplate, motion } from 'framer-motion'
 import { generateRandomString } from '@/components/ui/evervault-card'
 
-/* ─── D-MRV Step Card with EvervaultCard hover effect ─── */
 function DmrvStepCard({ step, title, desc, color }: { step: string; title: string; desc: string; color: string }) {
     const mouseX = useMotionValue(0)
     const mouseY = useMotionValue(0)
@@ -64,9 +63,6 @@ function DmrvStepCard({ step, title, desc, color }: { step: string; title: strin
     )
 }
 
-/* ─── Inline SVG components for marine life ─── */
-
-/** Hokusai wave art — uses the actual Great Wave illustration */
 function WaveArt() {
     return (
         <div className="wave-art" style={{ top: 0 }}>
@@ -90,8 +86,6 @@ function WaveArt() {
         </div>
     )
 }
-
-/** Tropical fish silhouette SVG */
 function FishSvg({ size = 48, className = '' }: { size?: number; className?: string }) {
     return (
         <svg width={size} height={size * 0.5} viewBox="0 0 60 30" className={className}>
@@ -100,37 +94,26 @@ function FishSvg({ size = 48, className = '' }: { size?: number; className?: str
         </svg>
     )
 }
-
-/** Sea turtle silhouette */
 function TurtleSvg({ size = 100, className = '' }: { size?: number; className?: string }) {
     return (
         <svg width={size} height={size * 0.65} viewBox="0 0 120 78" className={className}>
-            {/* shell */}
             <ellipse cx="60" cy="40" rx="30" ry="22" />
-            {/* head */}
             <ellipse cx="95" cy="36" rx="10" ry="7" />
             <circle cx="100" cy="34" r="1.5" fill="rgba(255,255,255,0.2)" />
-            {/* flippers */}
             <path d="M40,25 C30,10 20,12 18,18 C16,24 30,28 40,25 Z" />
             <path d="M40,55 C30,68 20,66 18,60 C16,54 30,50 40,55 Z" />
             <path d="M80,25 C88,14 95,16 96,22 C97,28 85,28 80,25 Z" />
             <path d="M80,55 C88,64 95,62 96,56 C97,50 85,50 80,55 Z" />
-            {/* tail */}
             <path d="M30,40 C22,40 18,38 16,40 C18,42 22,40 30,40 Z" />
-            {/* shell pattern */}
             <path d="M50,25 L55,38 L50,55" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8" />
             <path d="M65,24 L62,38 L65,55" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8" />
         </svg>
     )
 }
-
-/** Jellyfish silhouette */
 function JellySvg({ size = 60, className = '', style }: { size?: number; className?: string; style?: React.CSSProperties }) {
     return (
         <svg width={size} height={size * 1.4} viewBox="0 0 50 70" className={className} style={style}>
-            {/* bell */}
             <path d="M5,30 C5,10 15,2 25,2 C35,2 45,10 45,30 C40,33 35,32 30,33 C25,34 20,33 15,32 C10,31 5,33 5,30 Z" />
-            {/* tentacles */}
             <path d="M12,33 C14,42 10,52 12,62" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
             <path d="M20,34 C22,45 18,55 20,65" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.4" />
             <path d="M28,34 C26,46 30,56 28,66" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.5" />
@@ -138,8 +121,6 @@ function JellySvg({ size = 60, className = '', style }: { size?: number; classNa
         </svg>
     )
 }
-
-/** Kelp/seaweed frond */
 function KelpSvg({ height = 200, className = '', style }: { height?: number; className?: string; style?: React.CSSProperties }) {
     return (
         <svg width={height * 0.15} height={height} viewBox="0 0 30 200" className={className} style={style}>
@@ -147,15 +128,12 @@ function KelpSvg({ height = 200, className = '', style }: { height?: number; cla
                 d="M15,200 C15,180 10,160 14,140 C18,120 8,100 13,80 C18,60 10,40 14,20 C16,10 15,5 15,0"
                 fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
             />
-            {/* leaves */}
             <path d="M14,140 C8,135 4,125 8,120 C10,118 12,130 14,140 Z" fill="currentColor" opacity="0.6" />
             <path d="M14,100 C20,95 24,85 20,80 C18,78 16,90 14,100 Z" fill="currentColor" opacity="0.5" />
             <path d="M13,60 C7,55 5,45 9,42 C11,40 12,52 13,60 Z" fill="currentColor" opacity="0.4" />
         </svg>
     )
 }
-
-/** Thin-line icon components (Lucide-style) */
 function IconShield() {
     return (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -189,7 +167,6 @@ function IconGlobe() {
     )
 }
 
-/* ─── Main Landing Component ─── */
 export default function Landing() {
     useEffect(() => {
         const obs = new IntersectionObserver(
@@ -202,7 +179,6 @@ export default function Landing() {
 
     return (
         <div style={{ overflowX: 'hidden' }}>
-            {/* ═══ Fixed bubbles ═══ */}
             <div className="bubbles-bg">
                 {[12, 20, 8, 16, 24, 10, 18, 6, 14, 22].map((s, i) => (
                     <div key={i} className="bub" style={{
@@ -213,9 +189,7 @@ export default function Landing() {
             </div>
 
 
-            {/* ─────────────────────────────────────────────
           ZONE 1 · SURFACE — Hokusai Wave Hero
-      ───────────────────────────────────────────── */}
             <section className="z-surface relative" style={{ minHeight: '100vh' }}>
                 {/* Japanese wave art */}
                 <WaveArt />
@@ -284,9 +258,7 @@ export default function Landing() {
             </section>
 
 
-            {/* ─────────────────────────────────────────────
           ZONE 2 · SHALLOW WATERS — Impact Stats
-      ───────────────────────────────────────────── */}
             <section className="z-shallow relative" style={{ padding: '100px 0 120px' }}>
                 {/* Sun rays */}
                 <div className="sun-rays">
@@ -358,9 +330,7 @@ export default function Landing() {
             </section>
 
 
-            {/* ─────────────────────────────────────────────
           ZONE 3 · MID OCEAN — Blue Carbon Explainer
-      ───────────────────────────────────────────── */}
             <section className="z-mid relative" style={{ padding: '100px 0 140px' }}>
                 {/* Bio-luminescent dots */}
                 <div className="marine-layer">
@@ -486,9 +456,7 @@ export default function Landing() {
             </section>
 
 
-            {/* ─────────────────────────────────────────────
           ZONE 4 · DEEP OCEAN — D-MRV Workflow
-      ───────────────────────────────────────────── */}
             <section className="z-deep relative" style={{ padding: '100px 0 120px' }}>
                 {/* Deep glow spots */}
                 <div className="marine-layer">
@@ -627,9 +595,7 @@ export default function Landing() {
             </section>
 
 
-            {/* ─────────────────────────────────────────────
           ZONE 5 · OCEAN FLOOR — Footer with Kelp
-      ───────────────────────────────────────────── */}
             <section className="z-floor relative" style={{ padding: '60px 0 40px' }}>
                 {/* Sea plants / kelp behind footer */}
                 <div className="marine-layer" style={{ zIndex: 1 }}>

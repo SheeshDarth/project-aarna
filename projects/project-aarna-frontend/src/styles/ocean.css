@@ -1,11 +1,5 @@
-/* ═══════════════════════════════════════════════════════
-   PROJECT AARNA — HANDCRAFTED OCEAN DEPTH THEME
-   Professional blockchain trust + Japanese wave art
-   ═══════════════════════════════════════════════════════ */
-
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-/* ─── WAVE ANIMATIONS (Hokusai-inspired) ─── */
 @keyframes waveFloat1 {
 
     0%,
@@ -42,7 +36,6 @@
     }
 }
 
-/* ─── MARINE LIFE ANIMATIONS ─── */
 @keyframes fishSwimR {
     0% {
         transform: translateX(-15vw) translateY(0);
@@ -137,7 +130,6 @@
     }
 }
 
-/* ─── AMBIENT EFFECTS ─── */
 @keyframes biolumGlow {
 
     0%,
@@ -198,7 +190,6 @@
     }
 }
 
-/* ─── SCROLL REVEAL ─── */
 .reveal-up {
     opacity: 0;
     transform: translateY(50px);
@@ -242,7 +233,6 @@
     transform: translateY(0);
 }
 
-/* ─── DEPTH ZONE BACKGROUNDS ─── */
 .z-surface {
     background: linear-gradient(180deg, #E8F4F8 0%, #A8DCF0 8%, #5CB8D6 18%, #2D8AB0 35%, #1A6B8A 55%, #0E506E 75%, #005A7E 100%);
 }
@@ -263,7 +253,6 @@
     background: linear-gradient(180deg, #070F1D 0%, #050B14 50%, #080E1A 100%);
 }
 
-/* ─── GLASS CARD ─── */
 .g-card {
     background: rgba(12, 22, 42, 0.55);
     backdrop-filter: blur(22px);
@@ -281,7 +270,6 @@
     box-shadow: 0 12px 40px rgba(0, 105, 148, 0.15);
 }
 
-/* ─── TYPOGRAPHY ─── */
 .font-display {
     font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
 }
@@ -298,7 +286,6 @@
     color: #7A8FA0;
 }
 
-/* ─── SHEEN ANIMATION ─── */
 @keyframes sheen {
     0% {
         background-position: -200% center;
@@ -328,7 +315,6 @@
     text-shadow: none;
 }
 
-/* ─── BUTTONS ─── */
 .btn-primary {
     background: linear-gradient(135deg, #00E5CC 0%, #10B981 50%, #006994 100%);
     background-size: 200% auto;
@@ -403,7 +389,6 @@
     color: #00E5CC;
 }
 
-/* ─── MARINE SVG LAYERS ─── */
 .marine-layer {
     position: absolute;
     inset: 0;
@@ -490,7 +475,6 @@
     opacity: 0.2;
 }
 
-/* ─── BUBBLES (fixed) ─── */
 .bubbles-bg {
     position: fixed;
     inset: 0;
@@ -508,7 +492,6 @@
     animation: bubbleUp linear infinite;
 }
 
-/* ─── SUN RAYS ─── */
 .sun-rays {
     position: absolute;
     inset: 0;
@@ -525,7 +508,6 @@
     animation: sunRayShimmer 5s ease-in-out infinite;
 }
 
-/* ─── BIOLUMINESCENT DOTS ─── */
 .bio-dot {
     position: absolute;
     border-radius: 50%;
@@ -533,7 +515,6 @@
     animation: biolumGlow 4s ease-in-out infinite;
 }
 
-/* ─── WAVE SVG CONTAINER ─── */
 .wave-art {
     position: absolute;
     top: 0;
@@ -560,7 +541,6 @@
     animation: waveFloat3 8s ease-in-out infinite;
 }
 
-/* ─── FOOTER ─── */
 .footer-link {
     color: #5A7080;
     text-decoration: none;
@@ -572,7 +552,6 @@
     color: #00E5CC;
 }
 
-/* ─── WORKFLOW CONNECTOR ─── */
 .wf-line {
     flex-grow: 1;
     border-top: 2px dashed rgba(0, 229, 204, 0.15);
@@ -580,7 +559,6 @@
     position: relative;
 }
 
-/* ─── STAT CARD SUBTLE GLOW ─── */
 .stat-glow {
     box-shadow: 0 0 0 rgba(0, 105, 148, 0);
     transition: box-shadow 0.5s ease;
@@ -590,7 +568,6 @@
     box-shadow: 0 0 30px rgba(0, 105, 148, 0.2);
 }
 
-/* ─── PILL BADGE ─── */
 .pill-badge {
     display: inline-flex;
     align-items: center;
@@ -607,7 +584,6 @@
     text-shadow: 0 0 12px rgba(0, 229, 204, 0.4);
 }
 
-/* ─── HOVERING CARD EFFECT ─── */
 @keyframes hoverFloat {
 
     0%,
@@ -642,7 +618,6 @@
     border-color: rgba(0, 229, 204, 0.3);
 }
 
-/* ─── TRUST INDICATOR ─── */
 .trust-pill {
     display: inline-flex;
     align-items: center;
