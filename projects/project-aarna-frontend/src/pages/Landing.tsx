@@ -233,9 +233,9 @@ export default function Landing() {
                 {/* Hero content */}
                 <div className="relative flex flex-col items-center justify-center text-center px-6" style={{ minHeight: '100vh', zIndex: 10 }}>
                     <div className="reveal-up">
-                        <span className="pill-badge">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                            Decentralized MRV on Algorand
+                        <span className="pill-badge" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.2)' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                            <span className="sheen-text">Decentralized MRV on Algorand</span>
                         </span>
                     </div>
 
@@ -254,9 +254,9 @@ export default function Landing() {
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /></svg>
                             Explore the Registry
                         </Link>
-                        <Link to="/developer" className="btn-ghost">
-                            For Developers
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                        <Link to="/developer" className="btn-ghost" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.25)' }}>
+                            <span className="sheen-text">For Developers</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                         </Link>
                     </div>
 
