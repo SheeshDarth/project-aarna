@@ -189,7 +189,7 @@ export default function Landing() {
             </div>
 
 
-          ZONE 1 · SURFACE — Hokusai Wave Hero
+
             <section className="z-surface relative" style={{ minHeight: '100vh' }}>
                 {/* Japanese wave art */}
                 <WaveArt />
@@ -258,7 +258,7 @@ export default function Landing() {
             </section>
 
 
-          ZONE 2 · SHALLOW WATERS — Impact Stats
+
             <section className="z-shallow relative" style={{ padding: '100px 0 120px' }}>
                 {/* Sun rays */}
                 <div className="sun-rays">
@@ -330,7 +330,7 @@ export default function Landing() {
             </section>
 
 
-          ZONE 3 · MID OCEAN — Blue Carbon Explainer
+
             <section className="z-mid relative" style={{ padding: '100px 0 140px' }}>
                 {/* Bio-luminescent dots */}
                 <div className="marine-layer">
@@ -456,7 +456,7 @@ export default function Landing() {
             </section>
 
 
-          ZONE 4 · DEEP OCEAN — D-MRV Workflow
+
             <section className="z-deep relative" style={{ padding: '100px 0 120px' }}>
                 {/* Deep glow spots */}
                 <div className="marine-layer">
@@ -595,7 +595,7 @@ export default function Landing() {
             </section>
 
 
-          ZONE 5 · OCEAN FLOOR — Footer with Kelp
+
             <section className="z-floor relative" style={{ padding: '60px 0 40px' }}>
                 {/* Sea plants / kelp behind footer */}
                 <div className="marine-layer" style={{ zIndex: 1 }}>
